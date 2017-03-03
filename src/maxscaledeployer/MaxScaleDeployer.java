@@ -10,6 +10,7 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import java.io.InputStream;
+import java.util.Scanner;
 
 /**
  *
@@ -22,36 +23,84 @@ public class MaxScaleDeployer {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+        Scanner in = new Scanner(System.in);
+        int numServers;
+        int numDBServers;
+        System.out.println("Enter number of servers to install MaxScale: ");
+        numServers = in.nextInt();
+        in.nextLine();
+        
+        if(numServers>=1){
+            Server servers[] = new Server[numServers];
+
+            for(int i = 0; i < numServers; i++){
+                servers[i] = new Server();
+                System.out.println("Enter host "+(i+1));
+                servers[i].setHost(in.nextLine());
+                System.out.println("Enter username "+(i+1));
+                servers[i].setUser(in.nextLine());
+                System.out.println("Enter password "+(i+1));
+                servers[i].setpassword(in.nextLine());
+                
+                   
+            }
+            System.out.println("Enter number of Database servers to add to MaxScale: ");
+            numDBServers = in.nextInt();
+            in.nextLine();
+
+            DBServer dbServers[] = new DBServer[numDBServers];
+
+            for(int i = 0; i < numDBServers; i++){
+                dbServers[i] = new DBServer();
+                System.out.println("Enter host "+(i+1));
+                dbServers[i].setHost(in.nextLine());
+                System.out.println("Enter port "+(i+1));
+                dbServers[i].setPort(in.nextInt());
+                System.out.println("Enter username "+(i+1));
+                dbServers[i].setUser(in.nextLine());
+                System.out.println("Enter password "+(i+1));
+                dbServers[i].setpassword(in.nextLine());
+            }
+
+            for(DBServer server: dbServers){
+                System.out.println(server.toString());
+            }
+        }else{
+            System.out.println("You did not enter valid number of servers.");
+        }
+        
     }
     
-    private void runCom(String host, String user, String password, String command1) {
+    private int runCom(String host, String user, String password, String command) {
+        int exitStat = 0;
+        
         try{
 	    	
 	    	java.util.Properties config = new java.util.Properties(); 
 	    	config.put("StrictHostKeyChecking", "no");
 	    	JSch jsch = new JSch();
-	    	Session session=jsch.getSession(user, host, 22);
+	    	Session session = jsch.getSession(user, host, 22);
 	    	session.setPassword(password);
 	    	session.setConfig(config);
 	    	session.connect();
 	    	System.out.append("Running command..."+"\n");
 	    	
 	    	Channel channel=session.openChannel("exec");
-	        ((ChannelExec)channel).setCommand(command1);
+	        ((ChannelExec)channel).setCommand(command);
 	        channel.setInputStream(null);
 	        ((ChannelExec)channel).setErrStream(System.err);
 	        
-	        InputStream in=channel.getInputStream();
+	        InputStream in = channel.getInputStream();
 	        channel.connect();
-	        byte[] tmp=new byte[1024];
+	        byte[] tmp = new byte[1024];
 	        while(true){
 	          while(in.available()>0){
-	            int i=in.read(tmp, 0, 1024);
+	            int i = in.read(tmp, 0, 1024);
 	            if(i<0)break;
 	            System.out.append(new String(tmp, 0, i));
 	          }
 	          if(channel.isClosed()){
-	            //result.append("exit-status: "+channel.getExitStatus() + "\n");
+	            exitStat = channel.getExitStatus();
 	            break;
 	          }
 	          try{
@@ -62,11 +111,10 @@ public class MaxScaleDeployer {
 	        }
 	        channel.disconnect();
 	        session.disconnect();
-	        //result.append("DONE");
 	    }catch(Exception e){
 	    	System.out.append(e.getMessage());
 	    }
-
+            return exitStat;
 	}
     
 }

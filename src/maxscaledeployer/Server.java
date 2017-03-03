@@ -9,27 +9,22 @@ package maxscaledeployer;
  *
  * @author obissick
  */
-public class DBServer {
+public class Server {
     private String hostname;
-    private int port;
     private String username;
     private String password;
     
-    DBServer(){
+    Server(){
         
     }
-    DBServer(String host, int port, String user, String password){
+    Server(String host, int port, String user, String password){
         this.hostname = host;
-        this.port = port;
         this.username = user;
         this.password = password;
     }
     
     public void setHost(String host){
         this.hostname = host;
-    }
-    public void setPort(int port){
-        this.port = port;
     }
     public void setUser(String user){
         this.username = user;
@@ -41,9 +36,6 @@ public class DBServer {
     public String getHost(){
         return this.hostname;
     }
-    public int getPort(){
-        return this.port;
-    }
     public String getUser(){
         return this.username;
     }
@@ -53,6 +45,6 @@ public class DBServer {
     
     @Override
     public String toString(){
-        return "host: " + this.getHost() + " port: " + this.getPort() + " username: " + this.getUser() + " password: " + this.getPassword();
+        return "host: " + this.getHost() + " username: " + this.getUser() + " password: " + this.getPassword();
     }
 }
