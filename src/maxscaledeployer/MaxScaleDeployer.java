@@ -33,13 +33,22 @@ public class MaxScaleDeployer {
         IPAddressValidator ipIsValid = new IPAddressValidator();
         String maxScaleLink = "https://downloads.mariadb.com/MaxScale/1.4.5/centos/7Server/x86_64/maxscale-1.4.5-1.centos.7.x86_64.rpm";
         String commands[] = {
-            "sudo yum install -y corosync pcs pacemaker", 
-            "sudo systemctl start pcsd",
-            "sudo pcs cluster auth",
-            "sudo pcs cluster setup --name maxscale",
-            "sudo pcs cluster start --all",
-            "sudo pcs property set stonith-enabled=false",
-            "sudo pcs property set no-quorum-policy=ignore",            
+            "sudo yum install -y corosync pcs pacemaker", //0
+            "sudo systemctl start pcsd", //1
+            "sudo pcs cluster auth", //2
+            "sudo pcs cluster setup --name maxscale", //3
+            "sudo pcs cluster start --all", //4
+            "sudo pcs property set stonith-enabled=false", //5
+            "sudo pcs property set no-quorum-policy=ignore", //6
+            "sudo pcs resource defaults resource-stickiness=100", //7
+            "sudo systemctl stop maxscale", //8
+            "sudo systemctl disable maxscale", //9
+            "sudo pcs constraint colocation add maxscale_service virtual_ip INFINITY", //10
+            "sudo pcs constraint order virtual_ip then maxscale_service", //11
+            "sudo pcs cluster stop --all && sudo pcs cluster start --all", //12
+            "sudo systemctl enable pcsd", //13
+            "sudo systemctl enable corosync", //14
+            "sudo systemctl enable pacemaker" //15
         };
         
         System.out.println("Enter number of servers to install MaxScale: ");
@@ -87,6 +96,8 @@ public class MaxScaleDeployer {
             }
             System.out.println("Enter desired hacluster user password: ");
             hacluster = in.nextLine();
+            System.out.println("Enter virtual IP for cluster: ");
+            vip = in.nextLine();
             System.out.println("Installing corosync, pcs, pacemaker and maxscale on each node..");
             for(Server server : servers){
                 serverList += " " + server.getHost();
@@ -108,9 +119,23 @@ public class MaxScaleDeployer {
             System.out.println("Setting quorum...");
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[5]);
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[6]);
-            for(DBServer server: dbServers){
-                System.out.println(server.toString());
+            System.out.println("Setting up virtual IP...");
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),
+                    "sudo pcs resource create virtual_ip ocf:heartbeat:IPaddr2 ip="+vip+" cidr_netmask=24 op monitor interval=30s");
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[7]);
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),
+                    "sudo pcs resource create maxscale_service systemd:maxscale op monitor interval=\"10s\" timeout=\"15s\" op start interval=\"0\" timeout=\"15s\" op stop interval=\"0\" timeout=\"30s\"");
+            for(Server server: servers){
+                runCom(server.getHost(),server.getUser(),server.getPassword(),commands[8]);
+                runCom(server.getHost(),server.getUser(),server.getPassword(),commands[9]);
+                runCom(server.getHost(),server.getUser(),server.getPassword(),commands[13]);
+                runCom(server.getHost(),server.getUser(),server.getPassword(),commands[14]);
+                runCom(server.getHost(),server.getUser(),server.getPassword(),commands[15]);
             }
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[10]);
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[11]);
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[12]);
+            
         }else{
             System.out.println("You did not enter valid number of servers.");
         }
