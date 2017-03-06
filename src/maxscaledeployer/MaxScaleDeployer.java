@@ -26,6 +26,19 @@ public class MaxScaleDeployer {
         Scanner in = new Scanner(System.in);
         int numServers;
         int numDBServers;
+        int exitStatus = 0;
+        IPAddressValidator ipIsValid = new IPAddressValidator();
+        String commands[] = {
+            "sudo yum install -y corosync pcs pacemaker maxscale", 
+            "sudo passwd hacluster",
+            "sudo systemctl start pcsd",
+            "sudo pcs cluster auth",
+            "sudo pcs cluster setup --name clustername",
+            "sudo pcs cluster start --all",
+            "sudo pcs property set stonith-enabled=false",
+            "sudo pcs property set no-quorum-policy=ignore",            
+        };
+        
         System.out.println("Enter number of servers to install MaxScale: ");
         numServers = in.nextInt();
         in.nextLine();
@@ -35,14 +48,14 @@ public class MaxScaleDeployer {
 
             for(int i = 0; i < numServers; i++){
                 servers[i] = new Server();
-                System.out.println("Enter host "+(i+1));
-                servers[i].setHost(in.nextLine());
+                do{
+                    System.out.println("Enter host(IP) "+(i+1));
+                    servers[i].setHost(in.nextLine());
+                }while(!ipIsValid.validate(servers[i].getHost()));
                 System.out.println("Enter username "+(i+1));
                 servers[i].setUser(in.nextLine());
                 System.out.println("Enter password "+(i+1));
-                servers[i].setpassword(in.nextLine());
-                
-                   
+                servers[i].setpassword(in.nextLine());                                         
             }
             System.out.println("Enter number of Database servers to add to MaxScale: ");
             numDBServers = in.nextInt();
@@ -52,16 +65,25 @@ public class MaxScaleDeployer {
 
             for(int i = 0; i < numDBServers; i++){
                 dbServers[i] = new DBServer();
+                do{
                 System.out.println("Enter host "+(i+1));
                 dbServers[i].setHost(in.nextLine());
+                }while(ipIsValid.validate(dbServers[i].getHost()));
                 System.out.println("Enter port "+(i+1));
                 dbServers[i].setPort(in.nextInt());
                 System.out.println("Enter username "+(i+1));
                 dbServers[i].setUser(in.nextLine());
                 System.out.println("Enter password "+(i+1));
-                dbServers[i].setpassword(in.nextLine());
+                dbServers[i].setpassword(in.nextLine());   
             }
-
+            
+            System.out.println("Installing pacemaker and maxscale on each node..");
+            for(Server server : servers){
+                exitStatus = runCom(server.getHost(),server.getUser(),server.getPassword(),commands[0]);
+                if(exitStatus != 0){
+                    break;
+                }
+            }
             for(DBServer server: dbServers){
                 System.out.println(server.toString());
             }
@@ -71,7 +93,7 @@ public class MaxScaleDeployer {
         
     }
     
-    private int runCom(String host, String user, String password, String command) {
+    private static int runCom(String host, String user, String password, String command) {
         int exitStat = 0;
         
         try{
