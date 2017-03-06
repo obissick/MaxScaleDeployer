@@ -123,6 +123,7 @@ public class MaxScaleDeployer {
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),
                     "sudo pcs resource create virtual_ip ocf:heartbeat:IPaddr2 ip="+vip+" cidr_netmask=24 op monitor interval=30s");
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[7]);
+            System.out.println("Creating MaxScale service resource...");
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),
                     "sudo pcs resource create maxscale_service systemd:maxscale op monitor interval=\"10s\" timeout=\"15s\" op start interval=\"0\" timeout=\"15s\" op stop interval=\"0\" timeout=\"30s\"");
             for(Server server: servers){
@@ -134,6 +135,7 @@ public class MaxScaleDeployer {
             }
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[10]);
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[11]);
+            System.out.println("Restarting cluster...");
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[12]);
             
         }else{
