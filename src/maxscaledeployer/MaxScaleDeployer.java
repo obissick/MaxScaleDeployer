@@ -27,13 +27,16 @@ public class MaxScaleDeployer {
         int numServers;
         int numDBServers;
         int exitStatus = 0;
+        String serverList = "";
+        String hacluster;
+        String vip;
         IPAddressValidator ipIsValid = new IPAddressValidator();
+        String maxScaleLink = "https://downloads.mariadb.com/MaxScale/1.4.5/centos/7Server/x86_64/maxscale-1.4.5-1.centos.7.x86_64.rpm";
         String commands[] = {
-            "sudo yum install -y corosync pcs pacemaker maxscale", 
-            "sudo passwd hacluster",
+            "sudo yum install -y corosync pcs pacemaker", 
             "sudo systemctl start pcsd",
             "sudo pcs cluster auth",
-            "sudo pcs cluster setup --name clustername",
+            "sudo pcs cluster setup --name maxscale",
             "sudo pcs cluster start --all",
             "sudo pcs property set stonith-enabled=false",
             "sudo pcs property set no-quorum-policy=ignore",            
@@ -51,11 +54,14 @@ public class MaxScaleDeployer {
                 do{
                     System.out.println("Enter host(IP) "+(i+1));
                     servers[i].setHost(in.nextLine());
+                    if(!ipIsValid.validate(servers[i].getHost())){
+                        System.out.println("Enter Valid IP address.");
+                    }
                 }while(!ipIsValid.validate(servers[i].getHost()));
                 System.out.println("Enter username "+(i+1));
                 servers[i].setUser(in.nextLine());
                 System.out.println("Enter password "+(i+1));
-                servers[i].setpassword(in.nextLine());                                         
+                servers[i].setPassword(in.nextLine());                                         
             }
             System.out.println("Enter number of Database servers to add to MaxScale: ");
             numDBServers = in.nextInt();
@@ -66,24 +72,42 @@ public class MaxScaleDeployer {
             for(int i = 0; i < numDBServers; i++){
                 dbServers[i] = new DBServer();
                 do{
-                System.out.println("Enter host "+(i+1));
-                dbServers[i].setHost(in.nextLine());
+                    System.out.println("Enter host "+(i+1));
+                    dbServers[i].setHost(in.nextLine());
+                    if(!ipIsValid.validate(dbServers[i].getHost())){
+                        System.out.println("Enter Valid IP address.");
+                    }
                 }while(ipIsValid.validate(dbServers[i].getHost()));
                 System.out.println("Enter port "+(i+1));
                 dbServers[i].setPort(in.nextInt());
                 System.out.println("Enter username "+(i+1));
                 dbServers[i].setUser(in.nextLine());
                 System.out.println("Enter password "+(i+1));
-                dbServers[i].setpassword(in.nextLine());   
+                dbServers[i].setPassword(in.nextLine());   
             }
-            
-            System.out.println("Installing pacemaker and maxscale on each node..");
+            System.out.println("Enter desired hacluster user password: ");
+            hacluster = in.nextLine();
+            System.out.println("Installing corosync, pcs, pacemaker and maxscale on each node..");
             for(Server server : servers){
+                serverList += " " + server.getHost();
                 exitStatus = runCom(server.getHost(),server.getUser(),server.getPassword(),commands[0]);
                 if(exitStatus != 0){
                     break;
                 }
+                runCom(server.getHost(),server.getUser(),server.getPassword(),"sudo yum install -y "+maxScaleLink);
+                runCom(server.getHost(),server.getUser(),server.getPassword(),"echo "+hacluster+" | passwd --stdin hacluster");
+                System.out.println("Starting cluster...");
+                runCom(server.getHost(),server.getUser(),server.getPassword(),commands[1]);
             }
+            System.out.println("Authenticating cluster...");
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[2]+serverList +" -u hacluster -p "+hacluster);
+            System.out.println("Creating cluster...");
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[3]+serverList);
+            System.out.println("Starting cluster...");
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[4]);
+            System.out.println("Setting quorum...");
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[5]);
+            runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[6]);
             for(DBServer server: dbServers){
                 System.out.println(server.toString());
             }
@@ -105,7 +129,7 @@ public class MaxScaleDeployer {
 	    	session.setPassword(password);
 	    	session.setConfig(config);
 	    	session.connect();
-	    	System.out.append("Running command..."+"\n");
+	    	//System.out.append("Running command..."+"\n");
 	    	
 	    	Channel channel=session.openChannel("exec");
 	        ((ChannelExec)channel).setCommand(command);

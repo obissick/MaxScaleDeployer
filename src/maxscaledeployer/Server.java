@@ -17,7 +17,7 @@ public class Server {
     Server(){
         
     }
-    Server(String host, int port, String user, String password){
+    Server(String host, String user, String password){
         this.hostname = host;
         this.username = user;
         this.password = password;
@@ -29,7 +29,7 @@ public class Server {
     public void setUser(String user){
         this.username = user;
     }
-    public void setpassword(String password){
+    public void setPassword(String password){
         this.password = password;
     }
     
