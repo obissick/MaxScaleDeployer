@@ -97,12 +97,13 @@ public class MaxScaleDeployer {
                 dbServers[i].setPassword(in.nextLine());
                 System.out.println("Enter MySQL port: "+(i+1));
                 dbServers[i].setPort(in.nextInt());
+                in.nextLine();
             }
-            maxscaleConfig = new MaxConfig(dbServers);
             System.out.println("Enter desired hacluster user password: ");
             hacluster = in.nextLine();
             System.out.println("Enter virtual IP for cluster: ");
             vip = in.nextLine();
+            maxscaleConfig = new MaxConfig(dbServers);
             System.out.println("Installing corosync, pcs, pacemaker and maxscale on each node..");
             for(Server server : servers){
                 serverList += " " + server.getHost();
