@@ -130,30 +130,19 @@ public class MaxConfig {
             fw = new FileWriter(file);
             bw = new BufferedWriter(fw);
             bw.write(this.getConfig());
-
-            System.out.println("Done");
-
             } catch (IOException e) {
-
                  e.printStackTrace();
-
             } finally {
-
                     try {
-
                         if (bw != null){
                             bw.close();
                         }
                         if (fw != null){
                             fw.close();
                         }
-
                     } catch (IOException ex) {
-
                         ex.printStackTrace();
-
                     }
-
             }
     }
     
