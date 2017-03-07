@@ -91,11 +91,11 @@ public class MaxScaleDeployer {
                         System.out.println("Enter Valid IP address.");
                     }
                 }while(!ipIsValid.validate(dbServers[i].getHost()));
-                System.out.println("Enter username: "+(i+1));
+                System.out.println("Enter MySQL username: "+(i+1));
                 dbServers[i].setUser(in.nextLine());
-                System.out.println("Enter password: "+(i+1));
+                System.out.println("Enter MySQL password: "+(i+1));
                 dbServers[i].setPassword(in.nextLine());
-                System.out.println("Enter port: "+(i+1));
+                System.out.println("Enter MySQL port: "+(i+1));
                 dbServers[i].setPort(in.nextInt());
             }
             maxscaleConfig = new MaxConfig(dbServers);

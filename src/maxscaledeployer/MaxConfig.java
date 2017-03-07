@@ -5,6 +5,10 @@
  */
 package maxscaledeployer;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
 /**
  *
  * @author obissick
@@ -13,6 +17,7 @@ public class MaxConfig {
     private String conf ; 
     private String hosts ="";
     private String serversList="";
+    private final String file = "maxscale.cnf";
     
     MaxConfig(DBServer[] servers){
         
@@ -118,6 +123,38 @@ public class MaxConfig {
             "service=MaxAdmin Service\n" +
             "protocol=maxscaled\n" +
             "port=6603";
+        
+        BufferedWriter bw = null;
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(file);
+            bw = new BufferedWriter(fw);
+            bw.write(this.getConfig());
+
+            System.out.println("Done");
+
+            } catch (IOException e) {
+
+                 e.printStackTrace();
+
+            } finally {
+
+                    try {
+
+                        if (bw != null){
+                            bw.close();
+                        }
+                        if (fw != null){
+                            fw.close();
+                        }
+
+                    } catch (IOException ex) {
+
+                        ex.printStackTrace();
+
+                    }
+
+            }
     }
     
     public String getConfig(){
