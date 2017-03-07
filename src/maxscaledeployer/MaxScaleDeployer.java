@@ -99,7 +99,6 @@ public class MaxScaleDeployer {
                 dbServers[i].setPort(in.nextInt());
             }
             maxscaleConfig = new MaxConfig(dbServers);
-            System.out.println(maxscaleConfig.getConfig());
             System.out.println("Enter desired hacluster user password: ");
             hacluster = in.nextLine();
             System.out.println("Enter virtual IP for cluster: ");
@@ -114,6 +113,7 @@ public class MaxScaleDeployer {
                 runCom(server.getHost(),server.getUser(),server.getPassword(),"sudo yum install -y "+maxScaleLink);
                 runCom(server.getHost(),server.getUser(),server.getPassword(),"echo "+hacluster+" | passwd --stdin hacluster");
                 System.out.println("Starting cluster...");
+                transferFile(server, "maxscale.cnf");
                 runCom(server.getHost(),server.getUser(),server.getPassword(),commands[1]);
             }
             System.out.println("Authenticating cluster...");
@@ -162,8 +162,6 @@ public class MaxScaleDeployer {
 	    	session.setPassword(password);
 	    	session.setConfig(config);
 	    	session.connect();
-	    	//System.out.append("Running command..."+"\n");
-	    	
 	    	Channel channel=session.openChannel("exec");
 	        ((ChannelExec)channel).setCommand(command);
 	        channel.setInputStream(null);
@@ -196,7 +194,7 @@ public class MaxScaleDeployer {
             return exitStat;
 	}
     
-    private static void transerFile(Server server, String file){
+    private static void transferFile(Server server, String file){
         String SFTPHOST = server.getHost();
         int    SFTPPORT = 22;
         String SFTPUSER = server.getUser();
