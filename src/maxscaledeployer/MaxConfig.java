@@ -19,7 +19,11 @@ public class MaxConfig {
         for(int i =0; i < servers.length;i++){
             hosts += "[server"+i+"]\n";
             hosts += servers[i].toString()+"\n";
-            serversList += "server"+i+",";
+            if(i==servers.length-1){
+                serversList += "server"+i;
+            }else{
+                serversList += "server"+i+",";
+            }
         }
         this.conf = "# MaxScale documentation on GitHub:\n" +
             "# https://github.com/mariadb-corporation/MaxScale/blob/master/Documentation/Documentation-Contents.md\n" +
