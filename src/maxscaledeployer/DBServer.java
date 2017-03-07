@@ -31,6 +31,6 @@ public class DBServer extends Server{
     
     @Override
     public String toString(){
-        return "host: " + this.getHost() + " port: " + this.getPort() + " username: " + this.getUser() + " password: " + this.getPassword();
+        return "type=server\n address=" + this.getHost() + "\nport=" + this.getPort() + "\nprotocol=MySQLBackend";
     }
 }

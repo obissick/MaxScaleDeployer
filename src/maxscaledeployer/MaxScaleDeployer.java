@@ -7,8 +7,11 @@ package maxscaledeployer;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Scanner;
 
@@ -32,6 +35,7 @@ public class MaxScaleDeployer {
         String vip;
         IPAddressValidator ipIsValid = new IPAddressValidator();
         String maxScaleLink = "https://downloads.mariadb.com/MaxScale/1.4.5/centos/7Server/x86_64/maxscale-1.4.5-1.centos.7.x86_64.rpm";
+        MaxConfig maxscaleConfig;
         String commands[] = {
             "sudo yum install -y corosync pcs pacemaker", //0
             "sudo systemctl start pcsd", //1
@@ -61,15 +65,15 @@ public class MaxScaleDeployer {
             for(int i = 0; i < numServers; i++){
                 servers[i] = new Server();
                 do{
-                    System.out.println("Enter host(IP) "+(i+1));
+                    System.out.println("Enter host(IP): "+(i+1));
                     servers[i].setHost(in.nextLine());
                     if(!ipIsValid.validate(servers[i].getHost())){
                         System.out.println("Enter Valid IP address.");
                     }
                 }while(!ipIsValid.validate(servers[i].getHost()));
-                System.out.println("Enter username "+(i+1));
+                System.out.println("Enter username: "+(i+1));
                 servers[i].setUser(in.nextLine());
-                System.out.println("Enter password "+(i+1));
+                System.out.println("Enter password: "+(i+1));
                 servers[i].setPassword(in.nextLine());                                         
             }
             System.out.println("Enter number of Database servers to add to MaxScale: ");
@@ -81,19 +85,21 @@ public class MaxScaleDeployer {
             for(int i = 0; i < numDBServers; i++){
                 dbServers[i] = new DBServer();
                 do{
-                    System.out.println("Enter host "+(i+1));
+                    System.out.println("Enter host: "+(i+1));
                     dbServers[i].setHost(in.nextLine());
                     if(!ipIsValid.validate(dbServers[i].getHost())){
                         System.out.println("Enter Valid IP address.");
                     }
-                }while(ipIsValid.validate(dbServers[i].getHost()));
-                System.out.println("Enter port "+(i+1));
-                dbServers[i].setPort(in.nextInt());
-                System.out.println("Enter username "+(i+1));
+                }while(!ipIsValid.validate(dbServers[i].getHost()));
+                System.out.println("Enter username: "+(i+1));
                 dbServers[i].setUser(in.nextLine());
-                System.out.println("Enter password "+(i+1));
-                dbServers[i].setPassword(in.nextLine());   
+                System.out.println("Enter password: "+(i+1));
+                dbServers[i].setPassword(in.nextLine());
+                System.out.println("Enter port: "+(i+1));
+                dbServers[i].setPort(in.nextInt());
             }
+            maxscaleConfig = new MaxConfig(dbServers);
+            System.out.println(maxscaleConfig.getConfig());
             System.out.println("Enter desired hacluster user password: ");
             hacluster = in.nextLine();
             System.out.println("Enter virtual IP for cluster: ");
@@ -189,5 +195,35 @@ public class MaxScaleDeployer {
 	    }
             return exitStat;
 	}
+    
+    private static void transerFile(Server server, String file){
+        String SFTPHOST = server.getHost();
+        int    SFTPPORT = 22;
+        String SFTPUSER = server.getUser();
+        String SFTPPASS = server.getPassword();
+        String SFTPWORKINGDIR = "/etc/";
+
+        Session     session     = null;
+        Channel     channel     = null;
+        ChannelSftp channelSftp = null;
+
+        try{
+            JSch jsch = new JSch();
+            session = jsch.getSession(SFTPUSER,SFTPHOST,SFTPPORT);
+            session.setPassword(SFTPPASS);
+            java.util.Properties config = new java.util.Properties();
+            config.put("StrictHostKeyChecking", "no");
+            session.setConfig(config);
+            session.connect();
+            channel = session.openChannel("sftp");
+            channel.connect();
+            channelSftp = (ChannelSftp)channel;
+            channelSftp.cd(SFTPWORKINGDIR);
+            File f = new File(file);
+            channelSftp.put(new FileInputStream(f), f.getName());
+        }catch(Exception ex){
+        ex.printStackTrace();
+        }
+    }
     
 }
