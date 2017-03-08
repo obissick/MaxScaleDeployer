@@ -144,6 +144,8 @@ public class MaxScaleDeployer {
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[11]);
             System.out.println("Restarting cluster...");
             runCom(servers[0].getHost(),servers[0].getUser(),servers[0].getPassword(),commands[12]);
+            System.out.println("Cluster deployed!\nConnect to DB Cluster using the following:");
+            System.out.println("VIP: "+vip+"\nMaxScale Read-Write port: 3306\nMaxScale Read-Router port: 3307");
             
         }else{
             System.out.println("You did not enter valid number of servers.");
