@@ -34,7 +34,10 @@ public class MaxScaleDeployer {
         String hacluster;
         String vip;
         IPAddressValidator ipIsValid = new IPAddressValidator();
-        String maxScaleLink = "https://downloads.mariadb.com/MaxScale/1.4.5/centos/7Server/x86_64/maxscale-1.4.5-1.centos.7.x86_64.rpm";
+        final String maxScale1 = "https://downloads.mariadb.com/MaxScale/1.4.5/centos/7Server/x86_64/maxscale-1.4.5-1.centos.7.x86_64.rpm";
+        final String maxScale2 = "https://downloads.mariadb.com/MaxScale/2.0.5/rhel/7/x86_64/maxscale-2.0.5-1.rhel.7.x86_64.rpm";
+        int selectedVersion;
+        String maxscale ="";
         MaxConfig maxscaleConfig;
         String commands[] = {
             "sudo yum install -y corosync pcs pacemaker", //0
@@ -104,6 +107,18 @@ public class MaxScaleDeployer {
             System.out.println("Enter virtual IP for cluster: ");
             vip = in.nextLine();
             maxscaleConfig = new MaxConfig(dbServers);
+            System.out.println("Select MaxScale Version:\n1. Version 1\n2. Version 2\n");
+            selectedVersion = in.nextInt();
+            switch(selectedVersion){
+                case(1):
+                        maxscale = maxScale1;
+                    break;
+                case(2):
+                        maxscale = maxScale2;
+                        break;
+            }
+            System.out.println("Selected MaxScale version "+ selectedVersion);
+            
             System.out.println("Installing corosync, pcs, pacemaker and maxscale on each node..");
             for(Server server : servers){
                 serverList += " " + server.getHost();
@@ -111,7 +126,7 @@ public class MaxScaleDeployer {
                 if(exitStatus != 0){
                     break;
                 }
-                runCom(server.getHost(),server.getUser(),server.getPassword(),"sudo yum install -y "+maxScaleLink);
+                runCom(server.getHost(),server.getUser(),server.getPassword(),"sudo yum install -y "+maxscale);
                 runCom(server.getHost(),server.getUser(),server.getPassword(),"echo "+hacluster+" | passwd --stdin hacluster");
                 System.out.println("Starting cluster...");
                 transferFile(server, "maxscale.cnf");
