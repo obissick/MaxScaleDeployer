@@ -62,7 +62,7 @@ public class MaxScaleDeployer {
         numServers = in.nextInt();
         in.nextLine();
         
-        if(numServers>=1){
+        if(numServers>1){
             Server servers[] = new Server[numServers];
 
             for(int i = 0; i < numServers; i++){
