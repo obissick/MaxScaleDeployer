@@ -9,9 +9,13 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
 
@@ -62,7 +66,7 @@ public class MaxScaleDeployer {
         numServers = in.nextInt();
         in.nextLine();
         
-        if(numServers>1){
+        if(numServers>=2){
             Server servers[] = new Server[numServers];
 
             for(int i = 0; i < numServers; i++){
@@ -206,7 +210,7 @@ public class MaxScaleDeployer {
 	        }
 	        channel.disconnect();
 	        session.disconnect();
-	    }catch(Exception e){
+	    }catch(JSchException | IOException e){
 	    	System.out.append(e.getMessage());
 	    }
             return exitStat;
@@ -237,7 +241,7 @@ public class MaxScaleDeployer {
             channelSftp.cd(SFTPWORKINGDIR);
             File f = new File(file);
             channelSftp.put(new FileInputStream(f), f.getName());
-        }catch(Exception ex){
+        }catch(JSchException | SftpException | FileNotFoundException ex){
         ex.printStackTrace();
         }
     }
